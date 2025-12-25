@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-deployment
+  labels:
+    app: mindx-api
+spec:
+  replicas: 2 # Chạy 2 Pods để đảm bảo tính sẵn sàng cao
+  selector:
+    matchLabels:
+      app: mindx-api
+  template:
+    metadata:
+      labels:
+        app: mindx-api
+    spec:
+      containers:
+      - name: api-container
+        # Đây là đường dẫn Image trên Azure Container Registry (ACR)
+        # Sau này bạn sẽ thay <acr-name> bằng tên ACR thực tế của mình
+        image: mindxtunght104.azurecr.io/mindx-onboarding-backend:latest
+        ports:
+        - containerPort: 3000 # Cổng API chạy bên trong container
+        env:
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: api-secrets   
+              key: JWT_SECRET      
+        - name: NODE_ENV
+          value: "production"
+        # Thiết lập kiểm tra sức khỏe (Health Check - Task 1.1)
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          initialDelaySeconds: 5
+          periodSeconds: 10

@@ -1,0 +1,21 @@
+services:
+  # Dịch vụ Backend API (Task 1.1 & 1.2)
+  backend:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000" # Mở cổng theo kiến trúc
+    environment:
+      - JWT_SECRET=${JWT_SECRET}
+      - NODE_ENV=${NODE_ENV}
+
+  # Dịch vụ Frontend React (Task 4.1 & 4.2)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080" # Mở cổng theo kiến trúc
+    depends_on:
+      - backend # Chỉ chạy Frontend khi Backend đã sẵn sàng
