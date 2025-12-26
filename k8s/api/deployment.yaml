@@ -16,8 +16,6 @@ spec:
     spec:
       containers:
       - name: api-container
-        # Đây là đường dẫn Image trên Azure Container Registry (ACR)
-        # Sau này bạn sẽ thay <acr-name> bằng tên ACR thực tế của mình
         image: mindxtunght104.azurecr.io/mindx-onboarding-backend:latest
         ports:
         - containerPort: 3000 # Cổng API chạy bên trong container
@@ -29,7 +27,7 @@ spec:
               key: JWT_SECRET      
         - name: NODE_ENV
           value: "production"
-        # Thiết lập kiểm tra sức khỏe (Health Check - Task 1.1)
+        # Thiết lập health check
         livenessProbe:
           httpGet:
             path: /health

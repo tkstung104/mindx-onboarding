@@ -5,7 +5,7 @@ metadata:
   labels:
     app: mindx-frontend
 spec:
-  replicas: 1 # Giai đoạn dev chỉ cần 1 bản sao
+  replicas: 1 
   selector:
     matchLabels:
       app: mindx-frontend
@@ -16,7 +16,6 @@ spec:
     spec:
       containers:
       - name: frontend-container
-        # Bạn sẽ thay <acr-name> sau khi tạo ACR ở Step 1.3
         image: mindxtunght104.azurecr.io/mindx-onboarding-frontend:latest 
         ports:
         - containerPort: 8080 # Cổng của Nginx trong container
