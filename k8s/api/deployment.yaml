@@ -5,7 +5,7 @@ metadata:
   labels:
     app: mindx-api
 spec:
-  replicas: 2 # Chạy 2 Pods để đảm bảo tính sẵn sàng cao
+  replicas: 1 
   selector:
     matchLabels:
       app: mindx-api
@@ -14,6 +14,8 @@ spec:
       labels:
         app: mindx-api
     spec:
+      imagePullSecrets:
+      - name: acr-secret
       containers:
       - name: api-container
         image: mindxtunght104.azurecr.io/mindx-onboarding-backend:latest
@@ -30,7 +32,7 @@ spec:
         # Thiết lập health check
         livenessProbe:
           httpGet:
-            path: /health
+            path: /api/health
             port: 3000
           initialDelaySeconds: 5
           periodSeconds: 10

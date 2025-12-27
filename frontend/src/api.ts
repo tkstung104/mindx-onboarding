@@ -2,8 +2,9 @@ import axios from 'axios';
 
 // Khởi tạo một instance (thực thể) của Axios
 const api = axios.create({
-  // Địa chỉ Backend chạy ở Local (Port 3000 như trong sơ đồ kiến trúc)
-  baseURL: 'http://localhost:3000', 
+  // Sử dụng relative path để hoạt động với Ingress trên AKS
+  // Frontend sẽ gọi API qua cùng domain, Ingress sẽ route /api tới API service
+  baseURL: '/api',
 });
 
 // Sử dụng Interceptor để can thiệp vào trước khi yêu cầu được gửi đi
