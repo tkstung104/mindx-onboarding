@@ -7,7 +7,13 @@ dotenv.config();
 
 const app = express();
 app.use(express.json());
-app.use(cors());
+
+// Cấu hình CORS chi tiết để hoạt động với Ingress
+app.use(cors({
+  origin: true, // Cho phép Origin từ Ingress truyền vào
+  credentials: true,
+  optionsSuccessStatus: 204 // Rất quan trọng cho request OPTIONS (Preflight)
+}));
 
 const PORT = 3000;
 const JWT_SECRET = process.env.JWT_SECRET as string;
@@ -15,7 +21,8 @@ const JWT_SECRET = process.env.JWT_SECRET as string;
 // --- DATABASE ẢO (Sẽ mất khi restart server) ---
 const users: any[] = []; 
 
-app.get('/health', (req: Request, res: Response) => {
+// Health check endpoint với prefix /api để hoạt động với Ingress
+app.get('/api/health', (req: Request, res: Response) => {
   res.status(200).json({
     status: 'UP',
     timestamp: new Date().toISOString(),

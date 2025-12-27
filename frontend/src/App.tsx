@@ -11,7 +11,7 @@ function App() {
   // Xử lý Đăng ký
   const handleRegister = async () => {
     try {
-      await api.post('/api/register', { username, password });
+      await api.post('/register', { username, password });
       alert("Đăng ký thành công! Hãy đăng nhập ngay.");
       setIsRegisterMode(false); // Chuyển về màn hình login
     } catch (error: any) {
@@ -22,7 +22,7 @@ function App() {
   // Xử lý Đăng nhập
   const handleLogin = async () => {
     try {
-      const response = await api.post('/api/login', { username, password });
+      const response = await api.post('/login', { username, password });
       localStorage.setItem('token', response.data.accessToken);
       setIsLoggedIn(true);
       alert("Đăng nhập thành công!");
@@ -39,7 +39,7 @@ function App() {
 
   useEffect(() => {
     if (isLoggedIn) {
-      api.get('/api/user/profile')
+      api.get('/user/profile')
         .then(res => setUser(res.data.user))
         .catch(() => handleLogout());
     }
