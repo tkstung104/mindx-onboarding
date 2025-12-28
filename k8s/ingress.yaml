@@ -4,10 +4,19 @@ metadata:
   name: total-ingress
   annotations:
     kubernetes.io/ingress.class: nginx
+    # Yêu cầu cert-manager sử dụng issuer vừa tạo
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    # Tự động chuyển hướng từ HTTP sang HTTPS
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
 spec:
   ingressClassName: nginx
+  tls:
+  - hosts:
+    - tungha104.id.vn # Đổi ở đây
+    secretName: mindx-app-tls
   rules:
-  - http:
+  - host: tungha104.id.vn # Đổi ở đây
+    http:
       paths:
       # Định tuyến cho API
       - path: /api
