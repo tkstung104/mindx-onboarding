@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MindX Callback - Processing...</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        p {
+            color: #666;
+            margin: 10px 0;
+        }
+
+        .error {
+            color: #c33;
+            background: #fee;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        .success {
+            color: #3c3;
+            background: #efe;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="spinner" id="spinner"></div>
+        <h1 id="status">Đang xử lý...</h1>
+        <p id="message">Vui lòng đợi trong giây lát</p>
+        <div id="error" class="error" style="display: none;"></div>
+        <div id="success" class="success" style="display: none;"></div>
+    </div>
+
+    <script>
+        // Production: Dùng domain hiện tại (vì backend ở cùng domain, chỉ khác path /api)
+        const BACKEND_URL = window.location.origin;
+
+        /**
+         * Xử lý callback từ MindX (khi user đăng nhập xong)
+         */
+        async function handleCallback() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const code = urlParams.get('code');
+            const state = urlParams.get('state');
+            const error = urlParams.get('error');
+
+            // Xóa query params khỏi URL
+            window.history.replaceState({}, document.title, window.location.pathname);
+
+            if (error) {
+                console.error('❌ Lỗi từ MindX:', error);
+                showError(`Lỗi đăng nhập: ${error}`);
+                return;
+            }
+
+            if (!code) {
+                showError('Không nhận được authorization code từ MindX');
+                return;
+            }
+
+            console.log('='.repeat(60));
+            console.log('📥 Nhận được authorization code từ MindX');
+            console.log('🔑 Code:', code.substring(0, 20) + '...');
+
+            // Verify state
+            const savedState = sessionStorage.getItem('oauth_state');
+            if (state !== savedState) {
+                console.error('❌ State mismatch!');
+                showError('State không khớp. Có thể bị tấn công CSRF.');
+                return;
+            }
+
+            try {
+                // Gửi code lên backend để đổi lấy token
+                console.log('📤 Đang gửi code lên backend để đổi token...');
+
+                const codeVerifier = sessionStorage.getItem('oauth_code_verifier');
+                
+                const response = await fetch(`${BACKEND_URL}/api/callback`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        code: code,
+                        redirect_uri: `${window.location.origin}${window.location.pathname}`,
+                        code_verifier: codeVerifier
+                    })
+                });
+
+                console.log('📥 Response status:', response.status);
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Failed to exchange code');
+                }
+
+                const result = await response.json();
+                console.log('✅ Nhận được token từ backend:', result);
+
+                if (result.success && result.user) {
+                    // Lưu user info vào sessionStorage
+                    sessionStorage.setItem('user', JSON.stringify(result.user));
+                    sessionStorage.setItem('idToken', result.idToken || '');
+                    
+                    // Xóa state và code_verifier
+                    sessionStorage.removeItem('oauth_state');
+                    sessionStorage.removeItem('oauth_code_verifier');
+
+                    // Hiển thị success và redirect về trang chính
+                    showSuccess('Đăng nhập thành công! Đang chuyển hướng...');
+                    
+                    setTimeout(() => {
+                        window.location.href = 'index.html';
+                    }, 1500);
+                } else {
+                    throw new Error(result.message || 'Login failed');
+                }
+
+            } catch (error) {
+                console.error('❌ Lỗi:', error);
+                showError('Lỗi khi đổi code lấy token: ' + error.message);
+            }
+        }
+
+        function showError(message) {
+            document.getElementById('spinner').style.display = 'none';
+            document.getElementById('status').textContent = 'Lỗi';
+            document.getElementById('message').textContent = '';
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+        }
+
+        function showSuccess(message) {
+            document.getElementById('spinner').style.display = 'none';
+            document.getElementById('status').textContent = 'Thành công!';
+            document.getElementById('message').textContent = '';
+            const successDiv = document.getElementById('success');
+            successDiv.textContent = message;
+            successDiv.style.display = 'block';
+        }
+
+        // Xử lý callback khi page load
+        handleCallback();
+    </script>
+</body>
+</html>
+
